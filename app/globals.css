@@ -10,10 +10,12 @@ button,input,textarea { font:inherit; }
 h1 { margin-top:0; }
 .btn { display:inline-block; border:0; border-radius:9px; padding:11px 16px; background:#1f5eff; color:#fff; cursor:pointer; font-weight:600; }
 .btn.secondary { background:#e8edf7; color:#172033; }
-textarea,input[type=text] { width:100%; border:1px solid #cbd3e1; border-radius:9px; padding:12px; }
+textarea,input[type=text],input[type=file] { width:100%; border:1px solid #cbd3e1; border-radius:9px; padding:12px; background:#fff; }
 textarea { min-height:180px; resize:vertical; }
 .option { display:block; padding:13px; border:1px solid #d9dfeb; border-radius:9px; margin:9px 0; cursor:pointer; }
 .option:hover { background:#f5f7ff; }
 .result { font-size:22px; font-weight:700; }
 .error { color:#b42318; }
 .success { color:#067647; }
+.divider { display:flex; align-items:center; gap:12px; color:#657089; }
+.divider::before, .divider::after { content:""; height:1px; flex:1; background:#e1e6ef; }
