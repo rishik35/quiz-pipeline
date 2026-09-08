@@ -10,12 +10,7 @@ const quizSchema = {
         type: "object",
         properties: {
           question: { type: "string" },
-          options: {
-            type: "array",
-            items: { type: "string" },
-            minItems: 4,
-            maxItems: 4
-          },
+          options: { type: "array", items: { type: "string" }, minItems: 4, maxItems: 4 },
           correctAnswer: { type: "integer", minimum: 0, maximum: 3 }
         },
         required: ["question", "options", "correctAnswer"]
@@ -29,7 +24,7 @@ async function generateWithLLM(content: string, count: number): Promise<Generate
   const apiKey = process.env.GEMINI_API_KEY?.trim();
   if (!apiKey) throw new Error("GEMINI_API_KEY is not configured");
 
-  const model = process.env.GEMINI_MODEL?.trim() || "gemini-3-flash-preview";
+  const model = process.env.GEMINI_MODEL?.trim() || "gemini-3.8-flash";
   const ai = new GoogleGenAI({ apiKey });
 
   const prompt = `You are an expert training assessment designer. Create exactly ${count} high-quality multiple-choice questions from the supplied training material.
@@ -45,14 +40,19 @@ Rules:
 TRAINING MATERIAL:
 ${content}`;
 
-  const response = await ai.models.generateContent({
-    model,
-    contents: prompt,
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: quizSchema
+  let response;
+  try {
+    response = await ai.models.generateContent({
+      model,
+      contents: prompt,
+      config: { responseMimeType: "application/json", responseSchema: quizSchema }
+    });
+  } catch (error) {
+    if (error instanceof Error && /503|UNAVAILABLE|high demand/i.test(error.message)) {
+      throw new Error(`Gemini model '${model}' is temporarily unavailable (503). Try again later or choose another supported Gemini model.`);
     }
-  });
+    throw error;
+  }
 
   const raw = response.text?.trim();
   if (!raw) throw new Error("Gemini returned no structured output");
@@ -81,11 +81,8 @@ ${content}`;
 
 export async function generateQuiz(content: string, count = 5): Promise<GeneratedQuestion[]> {
   if (process.env.LLM_ENABLED === "true") {
-    try {
-      return await generateWithLLM(content, count);
-    } catch (error) {
-      console.error("AI generation failed; using deterministic fallback:", error);
-    }
+    return generateWithLLM(content, count);
   }
+
   return generateMockQuiz(count);
 }
