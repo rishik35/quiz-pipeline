@@ -27,17 +27,21 @@ async function generateWithLLM(content: string, count: number): Promise<Generate
   const model = process.env.GEMINI_MODEL?.trim() || "gemini-3.8-flash";
   const ai = new GoogleGenAI({ apiKey });
 
-  const prompt = `You are an expert training assessment designer. Create exactly ${count} high-quality multiple-choice questions from the supplied training material.
+  const prompt = `You are an expert training assessment designer. Create exactly ${count} high-quality multiple-choice questions from the supplied syllabus and learner gap report.
 
 Rules:
-- Use only information supported by the material. Do not invent facts.
+- Use the syllabus as the authoritative source for subject coverage.
+- Use the learner gap report to prioritize topics with larger gaps.
+- The gap report provides learner-level context; do not treat gap values as factual training content.
+- Use only information supported by the supplied syllabus/context. Do not invent facts.
 - Cover important concepts rather than trivial wording.
 - Each question must have exactly 4 plausible options.
 - correctAnswer is the zero-based index of the correct option.
 - Avoid duplicate questions and ambiguous answers.
+- Return exactly ${count} questions.
 - Return only the requested JSON structure.
 
-TRAINING MATERIAL:
+SUPPLIED SYLLABUS AND GAP REPORT:
 ${content}`;
 
   let response;
@@ -58,8 +62,8 @@ ${content}`;
   if (!raw) throw new Error("Gemini returned no structured output");
 
   const parsed = JSON.parse(raw) as { questions?: GeneratedQuestion[] };
-  if (!Array.isArray(parsed.questions) || parsed.questions.length === 0) {
-    throw new Error("Gemini returned no questions");
+  if (!Array.isArray(parsed.questions) || parsed.questions.length < count) {
+    throw new Error(`Gemini returned fewer than the requested ${count} questions`);
   }
 
   const questions = parsed.questions.slice(0, count);
