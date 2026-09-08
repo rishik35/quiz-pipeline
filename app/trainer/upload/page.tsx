@@ -5,6 +5,7 @@ export default function UploadPage() {
   const [title, setTitle] = useState("Training Assessment");
   const [file, setFile] = useState<File | null>(null);
   const [content, setContent] = useState("");
+  const [questionCount, setQuestionCount] = useState(5);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -18,6 +19,7 @@ export default function UploadPage() {
 
     const form = new FormData();
     form.append("title", title);
+    form.append("questionCount", String(questionCount));
     if (file) form.append("file", file);
     if (content.trim()) form.append("content", content);
 
@@ -37,11 +39,22 @@ export default function UploadPage() {
   return (
     <main className="container">
       <h1>AI Trainer</h1>
-      <p className="muted">Upload a training PDF. The trainer extracts its text and uses the configured AI model to generate a quiz. If AI is unavailable, the deterministic demo generator is used.</p>
+      <p className="muted">Upload training material and choose how many AI-generated MCQs you want.</p>
       <form className="card grid" onSubmit={submit}>
         <label>
           Quiz title
           <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} />
+        </label>
+
+        <label>
+          Number of MCQs
+          <select value={questionCount} onChange={(e) => setQuestionCount(Number(e.target.value))}>
+            <option value={5}>5</option>
+            <option value={10}>10</option>
+            <option value={15}>15</option>
+            <option value={20}>20</option>
+          </select>
+          <span className="muted">Choose between 1 and 20 questions for server JSON requests.</span>
         </label>
 
         <label>
@@ -65,7 +78,7 @@ export default function UploadPage() {
 
         {message && <p className="error">{message}</p>}
         <button className="btn" disabled={loading}>
-          {loading ? "AI is reading the material..." : "Generate AI Quiz"}
+          {loading ? "AI is generating your MCQs..." : "Generate AI Quiz"}
         </button>
       </form>
     </main>
